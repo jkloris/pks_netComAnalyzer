@@ -4,7 +4,7 @@ import sys
 from ish_classes import *
 from frames import *
 from fileReader import *
-pcapFile = './pcaps/trace-16.pcap'
+pcapFile = './pcaps/trace-26.pcap'
 pcaps = rdpcap(pcapFile)
 
 # print(pcaps.hexdump())

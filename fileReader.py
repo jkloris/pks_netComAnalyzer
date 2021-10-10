@@ -4,6 +4,7 @@ class FileReader:
         self.saptypeList = []
         self.ipv4typeList = []
         self.tcpPortList = []
+        self.udpPortList = []
         self.readProtocolFile()
 
     def readProtocolFile(self):
@@ -27,6 +28,10 @@ class FileReader:
                 mode = 4
                 continue
 
+            if lines[:-1] == "#UDP":
+                mode = 5
+                continue
+
             if mode == 1:
                 a = [lines[:4], lines[5:-1]]
                 self.ethertypeList.append(a)
@@ -45,4 +50,9 @@ class FileReader:
             if mode == 4:
                 a = [lines[:4], lines[5:-1]]
                 self.tcpPortList.append(a)
+                continue
+
+            if mode == 5:
+                a = [lines[:4], lines[5:-1]]
+                self.udpPortList.append(a)
                 continue
