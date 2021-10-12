@@ -1,13 +1,9 @@
 from scapy.utils import rdpcap
-import sys
-# from scapy.all import *
 from ish_classes import *
 from frames import *
 from fileReader import *
-pcapFile = './pcaps/trace-26.pcap'
-pcaps = rdpcap(pcapFile)
+import os
 
-# print(pcaps.hexdump())
 
 def pcapToBList(pcap):
     packetList = []
@@ -25,7 +21,7 @@ def pcapToBList(pcap):
 
     return packetList
 
-def analyzePacket(packet, fileReader):
+def analyzePacket(packet, fileReader, ipCounter):
     x = packet[12]+packet[13]
     frame = None
 
@@ -43,7 +39,7 @@ def analyzePacket(packet, fileReader):
             frame = IEEE802_llc(packet, fileReader)
     return frame
 
-def printAllPacketInfo(analyzedPackets):
+def printAllPacketInfo(analyzedPackets, ipCounter):
     for p in analyzedPackets:
         if p != None:
             print(f'Frame #{analyzedPackets.index(p) + 1}')
@@ -51,22 +47,40 @@ def printAllPacketInfo(analyzedPackets):
             p.printPacket()
             print("____________________________________________________")
 
-            # if analyzedPackets.index(p) > 20:
-            #     break
+    print("Vsetky zdrojove adresy (IPv4):")
     ipCounter.printAllIPs()
     print(f"Najviac paketov ({ipCounter.allIPs[ipCounter.getMostFrequentIP()]}) odoslal {ipCounter.getMostFrequentIP()}")
 
-packetList = pcapToBList(pcaps)
-fileReader = FileReader()
-ipCounter = IpCounter()
+def getPcapFiles():
+    path = './pcaps'
+    return os.listdir(path)
 
 
-analyzedPack = []
-for p in packetList:
-    analyzedPack.append(analyzePacket(p, fileReader))
-x = None
-while x!= 'k':
-    x = input()
-    if x == '1':
-        printAllPacketInfo(analyzedPack)
-        continue
+def getChosenPcapFile():
+    for p in getPcapFiles():
+       print(f'#{getPcapFiles().index(p) + 1} {p}')
+
+    print("\n-Vyber cislo pcap suboru, ktory chces analyzovat:")
+    a = int(input())
+    pcapFile = './pcaps/'+getPcapFiles()[a-1]
+
+    return  pcapFile
+
+def getAnalyzedPackets(packetList, fileReader,ipCounter):
+    analyzedPack = []
+    for p in packetList:
+        analyzedPack.append(analyzePacket(p, fileReader,ipCounter))
+    return analyzedPack
+
+def main():
+    pcaps = rdpcap(getChosenPcapFile())
+
+    packetList = pcapToBList(pcaps)
+    fileReader = FileReader()
+    ipCounter = IpCounter()
+    analyzedPack = getAnalyzedPackets(packetList, fileReader,ipCounter)
+
+    printAllPacketInfo(analyzedPack, ipCounter)
+
+if __name__== "__main__":
+    main()
