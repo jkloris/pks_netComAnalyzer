@@ -46,7 +46,8 @@ class Ethernet2(Ethernet):
 
 
 
-    def __init__(self, packet, fileReader):
+    def __init__(self, packet, fileReader, communicationAnalyzer):
+        self.communicationAnalyzer = communicationAnalyzer
         self.dstIP = ''
         self.srcIP = ''
         self.protocol = None
@@ -95,16 +96,25 @@ class Ethernet2(Ethernet):
         for port in self.fileReader.tcpPortList:
             if (self.packet[34] + self.packet[35]).lower() == port[0] or (self.packet[36] + self.packet[37]).lower() == port[0]:
                 self.port = port[1]
+                break
 
     def analyzeUDP(self):
         for port in self.fileReader.udpPortList:
             if (self.packet[34] + self.packet[35]).lower() == port[0] or (self.packet[36] + self.packet[37]).lower() == port[0]:
                 self.port = port[1]
+                break
+        if self.port == 'tftp':
+            self.communicationAnalyzer.addReadReqTFTP(self)
+            return
+        if self.port == None:
+            self.communicationAnalyzer.analyzeTFTP(self)
+
 
     def analyzeICMP(self):
         for type in self.fileReader.icmpTypeList:
             if (self.packet[34]).lower() == type[0]:
                 self.port = type[1]
+                break
 
     def whoAmI(self):
         print('Ethernet II')

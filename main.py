@@ -21,12 +21,12 @@ def pcapToBList(pcap):
 
     return packetList
 
-def analyzePacket(packet, fileReader, ipCounter):
+def analyzePacket(packet, fileReader, ipCounter, communicationAnalyzer):
     x = packet[12]+packet[13]
     frame = None
 
     if x >= '0800':
-        frame = Ethernet2(packet, fileReader)
+        frame = Ethernet2(packet, fileReader, communicationAnalyzer)
 
         if "IPv4" in frame.type:
             ipCounter.addIP(frame.srcIP)
@@ -46,8 +46,8 @@ def printAllPacketInfo(analyzedPackets, ipCounter):
             p.whoAmI()
             p.printPacket()
             print("____________________________________________________")
-        # if analyzedPackets.index(p) > 100:
-        #     break
+        if analyzedPackets.index(p) > 100:
+            break
 
     print("Vsetky zdrojove adresy (IPv4):")
     ipCounter.printAllIPs()
@@ -68,21 +68,30 @@ def getChosenPcapFile():
 
     return  pcapFile
 
-def getAnalyzedPackets(packetList, fileReader,ipCounter):
+def getAnalyzedPackets(packetList, fileReader,ipCounter, communicationAnalyzer):
     analyzedPack = []
     for p in packetList:
-        analyzedPack.append(analyzePacket(p, fileReader,ipCounter))
+        analyzedPack.append(analyzePacket(p, fileReader,ipCounter, communicationAnalyzer))
     return analyzedPack
 
 def main():
+
+    # a = [1,2,3,4,6]
+    # a.insert(-1,5)
+    # print(a[-2])
+    # input()
+
     pcaps = rdpcap(getChosenPcapFile())
 
     packetList = pcapToBList(pcaps)
     fileReader = FileReader()
     ipCounter = IpCounter()
-    analyzedPack = getAnalyzedPackets(packetList, fileReader,ipCounter)
+    communicationAnalyzer = CommunicationAnalyzer(packetList)
+    analyzedPack = getAnalyzedPackets(packetList, fileReader,ipCounter, communicationAnalyzer)
 
-    printAllPacketInfo(analyzedPack, ipCounter)
+    # printAllPacketInfo(analyzedPack, ipCounter)
+
+    communicationAnalyzer.printTFTPCommunication()
 
 if __name__== "__main__":
     main()
