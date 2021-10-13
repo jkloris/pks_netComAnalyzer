@@ -46,6 +46,8 @@ def printAllPacketInfo(analyzedPackets, ipCounter):
             p.whoAmI()
             p.printPacket()
             print("____________________________________________________")
+        # if analyzedPackets.index(p) > 100:
+        #     break
 
     print("Vsetky zdrojove adresy (IPv4):")
     ipCounter.printAllIPs()

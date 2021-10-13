@@ -86,6 +86,10 @@ class Ethernet2(Ethernet):
                 if key[1] == "UDP":
                     self.analyzeUDP()
                     return
+                if key[1] == "ICMP":
+                    self.analyzeICMP()
+                    return
+
 
     def analyzeTCP(self):
         for port in self.fileReader.tcpPortList:
@@ -97,6 +101,11 @@ class Ethernet2(Ethernet):
             if (self.packet[34] + self.packet[35]).lower() == port[0] or (self.packet[36] + self.packet[37]).lower() == port[0]:
                 self.port = port[1]
 
+    def analyzeICMP(self):
+        for type in self.fileReader.icmpTypeList:
+            if (self.packet[34]).lower() == type[0]:
+                self.port = type[1]
+
     def whoAmI(self):
         print('Ethernet II')
         print(f'Dlzka ramca poskytnuta pcap API: {len(self.packet)} B')
@@ -107,9 +116,12 @@ class Ethernet2(Ethernet):
         if self.srcIP != "": print(f'Zdrojova IP adresa: {self.srcIP}')
         if self.dstIP != "": print(f'Cielova IP adresa: {self.dstIP}')
         if self.protocol != None: print(f'{self.protocol}')
+        else: return
+
         if self.protocol == "UDP" or self.protocol == "TCP":
             print(f"{'Neznamy' if self.port == None else self.port}\nZdrojovy port: {int(str(('0x'+self.packet[34] + self.packet[35]).lower()),16)}\nCielovy port: {int(str(('0x'+self.packet[36] + self.packet[37]).lower()),16)}")
-
+        elif self.protocol == "ICMP":
+            print(f"ICMP type: {self.port}")
 
 class IEEE802_raw(Ethernet):
 

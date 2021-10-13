@@ -5,6 +5,7 @@ class FileReader:
         self.ipv4typeList = []
         self.tcpPortList = []
         self.udpPortList = []
+        self.icmpTypeList = []
         self.readProtocolFile()
 
     def readProtocolFile(self):
@@ -32,6 +33,10 @@ class FileReader:
                 mode = 5
                 continue
 
+            if lines[:-1] == "#ICMP":
+                mode = 6
+                continue
+
             if mode == 1:
                 a = [lines[:4], lines[5:-1]]
                 self.ethertypeList.append(a)
@@ -55,4 +60,9 @@ class FileReader:
             if mode == 5:
                 a = [lines[:4], lines[5:-1]]
                 self.udpPortList.append(a)
+                continue
+
+            if mode == 6:
+                a = [lines[:2], lines[3:-1]]
+                self.icmpTypeList.append(a)
                 continue
