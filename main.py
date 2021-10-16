@@ -95,3 +95,12 @@ def main():
 
 if __name__== "__main__":
     main()
+
+#TODO:
+#   ~pri 3wh ukazuje http aj ked tam nie je (asi nechat tak)
+#       -spytat sa na FIN a spravit to
+#       -edge case, ked na skoncenom porte zacne novy handshake
+#   ~TFTP: trace-15 packet 49 je problem, lebo nesedia porty a potom neukazuje, že to je tftp
+#       ~osetri krajne pripady (if packet.packet[43] == '03' and len(packet.packet) < 558:)
+#   ~viac najcastejsich adries
+#   ~ARP komunikacia

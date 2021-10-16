@@ -72,12 +72,12 @@ class CommunicationAnalyzer:
                     i.ack = packet
                     i.success = True
                     return
-                elif i.synAck is not None and (self.cmpIPandPort(i.synAck, packet) or self.cmpIPandPort(i.syn, packet)) and i.success:
+
+        if (int((packet.packet[47]).lower(), 16) & int("10", 16)) == 16:
+            for i in self.tcpComms:
+                if i.synAck is not None and (self.cmpIPandPort(i.synAck, packet) or self.cmpIPandPort(i.syn, packet)) and i.success:
                     i.comm.append(packet)
                     return
-
-
-
 
     def cmpIPandPort(self, p1, p2):
         if p1.srcIP == p2.dstIP and p1.dstIP == p2.srcIP and (p1.packet[34] + p1.packet[35]).lower() == (p2.packet[36] + p2.packet[37]).lower() and (p2.packet[34] + p2.packet[35]).lower() == (p1.packet[36] + p1.packet[37]).lower():
