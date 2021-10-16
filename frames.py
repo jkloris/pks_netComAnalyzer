@@ -8,6 +8,7 @@ class Ethernet:
         # self.lenApi = None
         # self.lenMed = None
 
+
         self.packet = packet
         self.analyze()
 
@@ -46,12 +47,14 @@ class Ethernet2(Ethernet):
 
 
 
-    def __init__(self, packet, fileReader, communicationAnalyzer):
+    def __init__(self, packet, fileReader, communicationAnalyzer, idNum):
         self.communicationAnalyzer = communicationAnalyzer
         self.dstIP = ''
         self.srcIP = ''
         self.protocol = None
         self.port = None
+        # tmp
+        self.numID = idNum
         Ethernet.__init__(self, packet, fileReader)
 
     def analyze(self):
@@ -97,6 +100,7 @@ class Ethernet2(Ethernet):
             if (self.packet[34] + self.packet[35]).lower() == port[0] or (self.packet[36] + self.packet[37]).lower() == port[0]:
                 self.port = port[1]
                 break
+        self.communicationAnalyzer.checkForTWH(self)
 
     def analyzeUDP(self):
         for port in self.fileReader.udpPortList:
