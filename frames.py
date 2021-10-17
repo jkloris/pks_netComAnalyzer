@@ -137,6 +137,8 @@ class Ethernet2(Ethernet):
         elif self.protocol == "ICMP":
             print(f"ICMP type: {self.port}")
 
+
+
 class IEEE802_raw(Ethernet):
 
     def __init__(self, packet, fileReader):

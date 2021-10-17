@@ -74,6 +74,15 @@ def getAnalyzedPackets(packetList, fileReader,ipCounter, communicationAnalyzer):
         analyzedPack.append(analyzePacket(p, fileReader,ipCounter, communicationAnalyzer, packetList.index(p)+1))
     return analyzedPack
 
+
+def printICMPcomms(analyzedPack):
+    for i in analyzedPack:
+        if i.protocol == 'ICMP':
+            print(f"_________________\nFrame #{i.numID}")
+            i.whoAmI()
+            i.printPacket()
+
+
 def main():
 
     # a = [1,2,3,4,6]
@@ -89,9 +98,63 @@ def main():
     communicationAnalyzer = CommunicationAnalyzer(packetList)
     analyzedPack = getAnalyzedPackets(packetList, fileReader,ipCounter, communicationAnalyzer)
 
-    # printAllPacketInfo(analyzedPack, ipCounter)
 
-    communicationAnalyzer.printTCPCommunication("https (ssl)", 6)
+    # printAllPacketInfo(analyzedPack, ipCounter)
+    x = None
+    # communicationAnalyzer.printTCPCommunication("https (ssl)", 6)
+    while x != 11:
+        print("Zvol moznosť:")
+        print("1....Vypis vsetkych ramcov (bod 1.-3.)")
+        print("2....Vypis ICMP komunikacie")
+        print("3....Vypis ARP komunikacie")
+        print("4....Vypis TFTP komunikacie")
+        print("5....Vypis HTTP komunikacie")
+        print("6....Vypis HTTPS komunikacie")
+        print("7....Vypis SSH komunikacie")
+        print("8....Vypis TELNET komunikacie")
+        print("9....Vypis FTP riadiacej komunikacie")
+        print("10...Vypis FTP datovej komunikacie")
+        print("11...Koniec programu")
+        x = int(input())
+
+        if x == 1:
+            printAllPacketInfo(analyzedPack, ipCounter)
+            continue
+        if x == 2:
+            printICMPcomms(analyzedPack)
+            continue
+        if x == 3:
+            #TODO ARP
+            continue
+        if x == 4:
+            communicationAnalyzer.printTFTPCommunication()
+            continue
+        if x == 5:
+            communicationAnalyzer.printTCPCommunication("http")
+            continue
+        if x == 6:
+            communicationAnalyzer.printTCPCommunication("https (ssl)")
+            continue
+        if x == 7:
+            communicationAnalyzer.printTCPCommunication("ssh")
+            continue
+        if x == 8:
+            communicationAnalyzer.printTCPCommunication("telnet")
+            continue
+        if x == 9:
+            communicationAnalyzer.printTCPCommunication("ftp-control")
+            continue
+        if x == 10:
+            communicationAnalyzer.printTCPCommunication("ftp-data")
+            continue
+
+
+
+
+
+
+
+
 
 if __name__== "__main__":
     main()
@@ -102,5 +165,6 @@ if __name__== "__main__":
 #       -edge case, ked na skoncenom porte zacne novy handshake
 #   ~TFTP: trace-15 packet 49 je problem, lebo nesedia porty a potom neukazuje, že to je tftp
 #       ~osetri krajne pripady (if packet.packet[43] == '03' and len(packet.packet) < 558:)
+#       -upravit vypis
 #   ~viac najcastejsich adries
 #   ~ARP komunikacia

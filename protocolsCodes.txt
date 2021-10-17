@@ -48,7 +48,7 @@ ff Global DSAP
 0013 chargen
 0014 ftp-data
 0015 ftp-control
-0016 shh
+0016 ssh
 0017 telnet
 0019 smtp
 0035 domain
