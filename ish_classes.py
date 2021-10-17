@@ -73,11 +73,14 @@ class CommunicationAnalyzer:
                     i.success = True
                     return
 
-        if (int((packet.packet[47]).lower(), 16) & int("10", 16)) == 16:
+        if (int((packet.packet[47]).lower(), 16) & int("10", 16)) == 16 or (int((packet.packet[47]).lower(), 16) & int("01", 16)) == 1 or (int((packet.packet[47]).lower(), 16) & int("04", 16)) == 16 == 4 :
             for i in self.tcpComms:
-                if i.synAck is not None and (self.cmpIPandPort(i.synAck, packet) or self.cmpIPandPort(i.syn, packet)) and i.success:
+                if i.synAck is not None and (self.cmpIPandPort(i.synAck, packet) or self.cmpIPandPort(i.syn, packet)) and i.success and i.automat.status != 6:
+                    i.automat.updateAutomat(packet)
                     i.comm.append(packet)
                     return
+
+
 
     def cmpIPandPort(self, p1, p2):
         if p1.srcIP == p2.dstIP and p1.dstIP == p2.srcIP and (p1.packet[34] + p1.packet[35]).lower() == (p2.packet[36] + p2.packet[37]).lower() and (p2.packet[34] + p2.packet[35]).lower() == (p1.packet[36] + p1.packet[37]).lower():
@@ -85,30 +88,92 @@ class CommunicationAnalyzer:
         return False
 
 
-    def printTCPCommunication(self):
+    def printTCPCommunication(self, protSwitch, finSwitch):
         for i in self.tcpComms:
-            if self.tcpComms.index(i) > 3: return
-            print(f"######Comm num{self.tcpComms.index(i)}\nSyn:")
-            i.syn.whoAmI()
-            print("_____________\nSyn + Ack:")
-            i.synAck.whoAmI()
-            print("_____________\nAck:")
-            i.ack.whoAmI()
-            print("_____________\nzvysok komunikacie:")
+            if i.success and i.syn.port == protSwitch:
+                if finSwitch == i.automat.status:
+                    print(f"###### Komunikaca c.{self.tcpComms.index(i) + 1} #####\nFrame {i.syn.numID} [SYN]")
+                    i.syn.whoAmI()
+                    print(f"_____________\nFrame {i.synAck.numID} [SYN, ACK]")
+                    i.synAck.whoAmI()
+                    print(f"_____________\nFrame {i.ack.numID} [ACK]")
+                    i.ack.whoAmI()
+                    print(f"_____________\n")
 
 
-            for k in i.comm:
-                print(k.numID)
-                k.whoAmI()
-                # k.printPacket()
-                print("_____________________________")
+                for k in i.comm:
+                    print(f"Frame {k.numID} [{i.flagSwitch(k.packet[47].lower())}]")
+                    k.whoAmI()
+                     # k.printPacket()
+                    print("_____________________________")
+
 
 
 class ThreeWayHandshake:
-    synAck = None
-    ack = None
-    success = False
 
     def __init__(self,synPacket):
+        self.synAck = None
+        self.ack = None
+        self.success = False
         self.syn = synPacket
         self.comm = []
+        self.automat = FinTCPAutomat()
+
+    def flagSwitch(self, flag):
+        return {
+            '01': 'FIN',
+            '04': 'RST',
+            '10': 'ACK',
+            '11': 'FIN, ACK',
+            '14': 'RST, ACK',
+            '18': 'PSH, ACK',
+            '19': 'FIN,PSH,ACK'
+        }[flag]
+
+class FinTCPAutomat:
+
+    def __init__(self):
+        self.status = 0
+
+    def updateAutomat(self, packet):
+        if self.status == 0 and (int((packet.packet[47]).lower(), 16) & int("11", 16))  == 11 : #FIN, ACK
+            self.status = 1
+            return
+        if self.status == 0 and (int((packet.packet[47]).lower(), 16) & int("01", 16)) == 1: #FIN
+            self.status = 2
+            return
+        if self.status == 0 and (int((packet.packet[47]).lower(), 16) & int("04", 16)) == 4: #RST
+            self.status = 6.1
+            return
+
+        if self.status == 0 and (int((packet.packet[47]).lower(), 16) & int("14", 16)) == 14: #RST,ACK
+            self.status = 6
+            return
+
+        if self.status == 1 and (packet.packet[47].lower() == '10' or packet.packet[47].lower() == '18'):#FIN,ACK -> ACK
+            self.status = 1.1
+            return
+        if self.status == 1.1 and (int((packet.packet[47]).lower(), 16) & int("11", 16)) == 11: #FIN,ACK -> ACK -> FIN,ACK
+            self.status = 1.2
+            return
+        if self.status == 1.2 and (packet.packet[47].lower() == '10' or packet.packet[47].lower() == '18'): #FIN,ACK -> ACK -> FIN,ACK -> ACK
+            self.status = 6 #DONE
+            return
+
+        if self.status == 2 and (packet.packet[47].lower() == '10' or packet.packet[47].lower() == '18'): #FIN -> ACK
+            self.status = 2.1
+            return
+        if self.status == 2.1 and (int((packet.packet[47]).lower(), 16) & int("01", 16)) == 1: #FIN -> ACK -> FIN
+            self.status = 2.2
+            return
+        if self.status == 2.2 and (packet.packet[47].lower() == '10' or packet.packet[47].lower() == '18'): #FIN -> ACK -> FIN -> ACK
+            self.status = 6 #DONE
+            return
+
+        if self.status == 2 and (int((packet.packet[47]).lower(), 16) & int("04", 16)) == 4: #FIN -> RST
+            self.status = 6.1
+            return
+
+        if self.status == 6.1 and (packet.packet[47].lower() == '10' or packet.packet[47].lower() == '18'): #..RST -> ACK?
+            self.status = 6
+            return

@@ -71,7 +71,7 @@ def getChosenPcapFile():
 def getAnalyzedPackets(packetList, fileReader,ipCounter, communicationAnalyzer):
     analyzedPack = []
     for p in packetList:
-        analyzedPack.append(analyzePacket(p, fileReader,ipCounter, communicationAnalyzer, packetList.index(p)))
+        analyzedPack.append(analyzePacket(p, fileReader,ipCounter, communicationAnalyzer, packetList.index(p)+1))
     return analyzedPack
 
 def main():
@@ -91,7 +91,7 @@ def main():
 
     # printAllPacketInfo(analyzedPack, ipCounter)
 
-    communicationAnalyzer.printTCPCommunication()
+    communicationAnalyzer.printTCPCommunication("https (ssl)", 6)
 
 if __name__== "__main__":
     main()
