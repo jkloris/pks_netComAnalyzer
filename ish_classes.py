@@ -64,7 +64,7 @@ class CommunicationAnalyzer:
                 print(f"[{opcode[i[o].packet[43]]}]{'; Block: ' + str(int(i[o].packet[44] + i[o].packet[45],16)) if (i[o].packet[43] == '04' or i[o].packet[43] == '03') else ''}\n_____________________________")
 
 
-    def analyzeARP(self,packet):
+    def analyzeARP(self, packet):
         com = {
             'request' : [],
             'reply' : []
@@ -72,6 +72,7 @@ class CommunicationAnalyzer:
 
         for i in self.arpComms:
             if packet.packet[21] == '01' and ((i['request'] != [] and i['request'][0].srcIP == packet.srcIP and  i['request'][0].dstIP == packet.dstIP ) or (i['reply'] != [] and i['reply'][0].srcIP == packet.dstIP and  i['reply'][0].srcIP == packet.dstIP)) : #mozno pridat aj kontrolu MAC
+                print(packet.numID)
                 i['request'].append(packet)
                 return
             elif packet.packet[21] == '02' and ((i['request'] != [] and i['request'][0].srcIP == packet.dstIP and i['request'][0].dstIP == packet.srcIP) or (i['reply'] != [] and i['reply'][0].srcIP == packet.srcIP and i['reply'][0].dstIP == packet.dstIP)):
@@ -87,8 +88,21 @@ class CommunicationAnalyzer:
             return
 
     def printARPCommunication(self):
+        print(self.arpComms)
         for p in self.arpComms:
-            print(p)
+            print(f"\n######## ARP Komunikacia c.{self.arpComms.index(p)+1} ########\n")
+            print(f"ARP-requests:")
+            for req in p['request']:
+                print(f"_________________\nFrame #{req.numID}")
+                print(p['request'])
+                print(req)
+                # req.whoAmI()
+                # req.printPacket()
+            print(f"\nARP-replies:")
+            for rep in p['reply']:
+                print(f"_________________\nFrame #{rep.numID}")
+                rep.whoAmI()
+                rep.printPacket()
 
     #tcp communicatoin
     def checkForTWH(self, packet):

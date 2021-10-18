@@ -8,7 +8,6 @@ class Ethernet:
         # self.lenApi = None
         # self.lenMed = None
 
-
         self.packet = packet
         self.analyze()
 
@@ -23,7 +22,7 @@ class Ethernet:
     def whoAmI(self):
         print(f'Dlzka ramca poskytnuta pcap API: {len(self.packet)} B')
         print(f'Dlzka ramca prenasana po mediu: {64 if (len(self.packet) + 4) < 64 else (len(self.packet) + 4)} B')
-        print("Neznamy protokol" if self.type == '' else self.type )
+        print("Neznamy protokol" if self.type == '' else self.type)
         print(f'Zdrojova MAC adresa: {self.srcMAC}')
         print(f'Cielova MAC adresa: {self.dstMAC}')
 
@@ -31,21 +30,17 @@ class Ethernet:
         s = ''
         counter = 0
         for b in self.packet:
-            s+= b + " "
-            counter+=1
+            s += b + " "
+            counter += 1
             if counter % 8 == 0:
-                s+=' '
+                s += ' '
             if counter % 16 == 0:
                 print(s)
                 s = ''
         print(s)
 
 
-
-
 class Ethernet2(Ethernet):
-
-
 
     def __init__(self, packet, fileReader, communicationAnalyzer, idNum):
         self.communicationAnalyzer = communicationAnalyzer
@@ -79,11 +74,15 @@ class Ethernet2(Ethernet):
         self.srcIP = self.srcIP[:-1]
         self.dstIP = self.dstIP[:-1]
 
+        print('y', self.numID, self.type)
+
         if self.type == "IPv4":
             self.analyzeIPv4()
-        if self.type == "ARP":
-            self.communicationAnalyzer.analyzeARP(self)
-
+            return
+        # elif self.type == "ARP":
+        #     print('x', self.numID)
+        #     self.communicationAnalyzer.analyzeARP(self)
+        #     return
 
     def analyzeIPv4(self):
         for key in self.fileReader.ipv4typeList:
@@ -99,18 +98,18 @@ class Ethernet2(Ethernet):
                     self.analyzeICMP()
                     return
 
-
-
     def analyzeTCP(self):
         for port in self.fileReader.tcpPortList:
-            if (self.packet[34] + self.packet[35]).lower() == port[0] or (self.packet[36] + self.packet[37]).lower() == port[0]:
+            if (self.packet[34] + self.packet[35]).lower() == port[0] or (self.packet[36] + self.packet[37]).lower() == \
+                    port[0]:
                 self.port = port[1]
                 break
         self.communicationAnalyzer.checkForTWH(self)
 
     def analyzeUDP(self):
         for port in self.fileReader.udpPortList:
-            if (self.packet[34] + self.packet[35]).lower() == port[0] or (self.packet[36] + self.packet[37]).lower() == port[0]:
+            if (self.packet[34] + self.packet[35]).lower() == port[0] or (self.packet[36] + self.packet[37]).lower() == \
+                    port[0]:
                 self.port = port[1]
                 break
         if self.port == 'tftp':
@@ -118,7 +117,6 @@ class Ethernet2(Ethernet):
             return
         if self.port == None:
             self.communicationAnalyzer.analyzeTFTP(self)
-
 
     def analyzeICMP(self):
         for type in self.fileReader.icmpTypeList:
@@ -132,17 +130,19 @@ class Ethernet2(Ethernet):
         print(f'Dlzka ramca prenasana po mediu: {64 if (len(self.packet) + 4) < 64 else (len(self.packet) + 4)} B')
         print(f'Zdrojova MAC adresa: {self.srcMAC}')
         print(f'Cielova MAC adresa: {self.dstMAC}')
-        print("Neznamy protokol" if self.type == '' else self.type )
+        print("Neznamy protokol" if self.type == '' else self.type)
         if self.srcIP != "": print(f'Zdrojova IP adresa: {self.srcIP}')
         if self.dstIP != "": print(f'Cielova IP adresa: {self.dstIP}')
-        if self.protocol != None: print(f'{self.protocol}')
-        else: return
+        if self.protocol != None:
+            print(f'{self.protocol}')
+        else:
+            return
 
         if self.protocol == "UDP" or self.protocol == "TCP":
-            print(f"{'Neznamy' if self.port == None else self.port}\nZdrojovy port: {int(str(('0x'+self.packet[34] + self.packet[35]).lower()),16)}\nCielovy port: {int(str(('0x'+self.packet[36] + self.packet[37]).lower()),16)}")
+            print(
+                f"{'Neznamy' if self.port == None else self.port}\nZdrojovy port: {int(str(('0x' + self.packet[34] + self.packet[35]).lower()), 16)}\nCielovy port: {int(str(('0x' + self.packet[36] + self.packet[37]).lower()), 16)}")
         elif self.protocol == "ICMP":
             print(f"ICMP type: {self.port}")
-
 
 
 class IEEE802_raw(Ethernet):
@@ -151,13 +151,9 @@ class IEEE802_raw(Ethernet):
         Ethernet.__init__(self, packet, fileReader)
         self.type = "IPX"
 
-
     def whoAmI(self):
         print('IEEE 802.3 Raw')
         Ethernet.whoAmI(self)
-
-
-
 
 
 class IEEE802_snap(Ethernet):
