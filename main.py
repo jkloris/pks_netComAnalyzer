@@ -124,7 +124,7 @@ def main():
             printICMPcomms(analyzedPack)
             continue
         if x == 3:
-            #TODO ARP
+            communicationAnalyzer.printARPCommunication()
             continue
         if x == 4:
             communicationAnalyzer.printTFTPCommunication()

@@ -21,6 +21,8 @@ class CommunicationAnalyzer:
 
     tftpComms = []
     tcpComms = []
+    arpComms = []
+
     def __init__(self, packetList):
         self.packetList = packetList
 
@@ -54,6 +56,33 @@ class CommunicationAnalyzer:
                 print(f"({i[o].packet[43]} {'Block ' +i[o].packet[44]+ i[o].packet[45] if (i[o].packet[43] != '01' and i[o].packet[43] != '05') else ('Read Request' if i[o].packet[43] == '01' else 'Error' )})\n_____________________________")
 
 
+    def analyzeARP(self,packet):
+        #request/reply = packet.packet[21] (01,02)
+
+        com = {
+            'request' : [],
+            'reply' : []
+        }
+
+        for i in self.arpComms:
+            if packet.packet[21] == '01' and ((i['request'] != [] and i['request'][0].srcIP == packet.srcIP and  i['request'][0].dstIP == packet.dstIP ) or (i['reply'] != [] and i['reply'][0].srcIP == packet.dstIP and  i['reply'][0].srcIP == packet.dstIP)) : #mozno pridat aj kontrolu MAC
+                i['request'].append(packet)
+                return
+            elif packet.packet[21] == '02' and ((i['request'] != [] and i['request'][0].srcIP == packet.dstIP and i['request'][0].dstIP == packet.srcIP) or (i['reply'] != [] and i['reply'][0].srcIP == packet.srcIP and i['reply'][0].dstIP == packet.dstIP)):
+                i['reply'].append(packet)
+                return
+        if packet.packet[21] == '01':
+            com['request'].append(packet)
+            self.arpComms.append(com)
+            return
+        elif packet.packet[21] == '02':
+            com['reply'].append(packet)
+            self.arpComms.append(com)
+            return
+
+    def printARPCommunication(self):
+        for p in self.arpComms:
+            print(p)
 
     #tcp communicatoin
     def checkForTWH(self, packet):

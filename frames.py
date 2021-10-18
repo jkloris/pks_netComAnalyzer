@@ -71,6 +71,9 @@ class Ethernet2(Ethernet):
             if self.type == "IPv4" and i < 4:
                 self.srcIP += str(int(self.packet[i + 26], 16)) + '.'
                 self.dstIP += str(int(self.packet[i + 30], 16)) + '.'
+            elif self.type == "ARP" and i < 4:
+                self.srcIP += str(int(self.packet[i + 28], 16)) + '.'
+                self.dstIP += str(int(self.packet[i + 38], 16)) + '.'
         self.dstMAC = self.dstMAC[:-1]
         self.srcMAC = self.srcMAC[:-1]
         self.srcIP = self.srcIP[:-1]
@@ -78,6 +81,8 @@ class Ethernet2(Ethernet):
 
         if self.type == "IPv4":
             self.analyzeIPv4()
+        if self.type == "ARP":
+            self.communicationAnalyzer.analyzeARP(self)
 
 
     def analyzeIPv4(self):
@@ -93,6 +98,7 @@ class Ethernet2(Ethernet):
                 if key[1] == "ICMP":
                     self.analyzeICMP()
                     return
+
 
 
     def analyzeTCP(self):
