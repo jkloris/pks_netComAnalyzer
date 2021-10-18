@@ -26,39 +26,34 @@ class CommunicationAnalyzer:
     def __init__(self, packetList):
         self.packetList = packetList
 
-    #TODO trace-15 packet 49 je problem, lebo nesedia porty a potom neukazuje, že to je tftp
+
     def analyzeTFTP(self, packet):
-            i = len(self.tftpComms) - 1
-
-            if self.tftpComms[i][-1] == 1:
-                return
-
-            preSrcPort = (self.tftpComms[i][-2].packet[34] + self.tftpComms[i][-2].packet[35]).lower()
-            thisDstPort = (packet.packet[36] + packet.packet[37]).lower()
-            if preSrcPort == thisDstPort:
+        thisDstPort = (packet.packet[36] + packet.packet[37]).lower()
+        thisSrcPort = (packet.packet[34] + packet.packet[35]).lower()
+        for p in self.tftpComms:
+            if len(p) == 1 and p[0].srcIP == packet.dstIP and p[0].dstIP == packet.srcIP and thisDstPort == (p[0].packet[34] + p[0].packet[35]).lower():
                 packet.port = 'tftp'
-                self.tftpComms[i].insert(-1, packet)
-                #TODO osetri krajne pripady
-                # if packet.packet[43] == '03' and len(packet.packet) < 558:
+                p.append(packet)
+                return
+            elif ((p[1].srcIP == packet.srcIP and p[1].dstIP == packet.dstIP) or (p[1].srcIP == packet.dstIP and p[1].dstIP == packet.srcIP)) and ((thisDstPort == (p[1].packet[34] + p[1].packet[35]).lower() and thisSrcPort == (p[1].packet[36] + p[1].packet[37]).lower()) or (thisSrcPort == (p[1].packet[34] + p[1].packet[35]).lower() and thisDstPort == (p[1].packet[36] + p[1].packet[37]).lower())):
+                packet.port = 'tftp'
+                p.append(packet)
+                return
 
 
     #vytvaram 2D pole, kde prvy element je vzdy read request a posledny je flag o ukonceni komunikacie
     def addReadReqTFTP(self, packet):
-        if len(self.tftpComms) > 0:
-            self.tftpComms[-1][-1] = 1
-        self.tftpComms.append([packet, 0])
+        self.tftpComms.append([packet])
 
     def printTFTPCommunication(self):
         for i in self.tftpComms:
-            print(f"############# TFTP komunikacia cislo {self.tftpComms.index(i) + 1}")
-            for o in range(len(i)-1):
+            print(f"######### TFTP komunikacia c {self.tftpComms.index(i) + 1} #######")
+            for o in range(len(i)):
                 i[o].whoAmI()
-                print(f"({i[o].packet[43]} {'Block ' +i[o].packet[44]+ i[o].packet[45] if (i[o].packet[43] != '01' and i[o].packet[43] != '05') else ('Read Request' if i[o].packet[43] == '01' else 'Error' )})\n_____________________________")
+                print(f"({i[o].packet[43]} {'Block ' + str(int(i[o].packet[44] + i[o].packet[45],16)) if (i[o].packet[43] != '01' and i[o].packet[43] != '05') else ('Read Request' if i[o].packet[43] == '01' else 'Error' )})\n_____________________________")
 
 
     def analyzeARP(self,packet):
-        #request/reply = packet.packet[21] (01,02)
-
         com = {
             'request' : [],
             'reply' : []
