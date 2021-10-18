@@ -46,11 +46,22 @@ class CommunicationAnalyzer:
         self.tftpComms.append([packet])
 
     def printTFTPCommunication(self):
+
+        opcode = {
+            '01': 'Read Request',
+            '02': 'Write Request',
+            '03': 'Data',
+            '04': 'ACK',
+            '05': 'ERROR',
+            '06': 'OACK'
+        }
+
         for i in self.tftpComms:
-            print(f"######### TFTP komunikacia c {self.tftpComms.index(i) + 1} #######")
+            print(f"######### TFTP komunikacia c.{self.tftpComms.index(i) + 1} #######")
             for o in range(len(i)):
+                print(f"Frame #{i[o].numID}")
                 i[o].whoAmI()
-                print(f"({i[o].packet[43]} {'Block ' + str(int(i[o].packet[44] + i[o].packet[45],16)) if (i[o].packet[43] != '01' and i[o].packet[43] != '05') else ('Read Request' if i[o].packet[43] == '01' else 'Error' )})\n_____________________________")
+                print(f"[{opcode[i[o].packet[43]]}]{'; Block: ' + str(int(i[o].packet[44] + i[o].packet[45],16)) if (i[o].packet[43] == '04' or i[o].packet[43] == '03') else ''}\n_____________________________")
 
 
     def analyzeARP(self,packet):
