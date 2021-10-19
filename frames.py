@@ -5,6 +5,7 @@ class Ethernet:
         self.srcMAC = ''
         self.type = ''
         self.fileReader = fileReader
+        self.protocol = None
         # self.lenApi = None
         # self.lenMed = None
 
@@ -13,8 +14,8 @@ class Ethernet:
 
     def analyze(self):
         for i in range(6):
-            self.dstMAC += self.packet[i] + ':'
-            self.srcMAC += self.packet[i + 6] + ':'
+            self.dstMAC += decToHex(self.packet[i]) + ':'
+            self.srcMAC += decToHex(self.packet[i + 6]) + ':'
 
         self.dstMAC = self.dstMAC[:-1]
         self.srcMAC = self.srcMAC[:-1]
@@ -30,7 +31,7 @@ class Ethernet:
         s = ''
         counter = 0
         for b in self.packet:
-            s += b + " "
+            s += decToHex(b) + " "
             counter += 1
             if counter % 8 == 0:
                 s += ' '
@@ -46,7 +47,7 @@ class Ethernet2(Ethernet):
         self.communicationAnalyzer = communicationAnalyzer
         self.dstIP = ''
         self.srcIP = ''
-        self.protocol = None
+        # self.protocol = None
         self.port = None
         # tmp
         self.numID = idNum
@@ -56,37 +57,35 @@ class Ethernet2(Ethernet):
 
         # get ether type
         for key in self.fileReader.ethertypeList:
-            if (self.packet[12] + self.packet[13]).lower() == key[0]:
+            if (decToHex(self.packet[12]) + decToHex(self.packet[13])).lower() == key[0]:
                 self.type = key[1]
                 break
 
         for i in range(6):
-            self.dstMAC += self.packet[i] + ':'
-            self.srcMAC += self.packet[i + 6] + ':'
+            self.dstMAC += decToHex(self.packet[i]) + ':'
+            self.srcMAC += decToHex(self.packet[i + 6]) + ':'
             if self.type == "IPv4" and i < 4:
-                self.srcIP += str(int(self.packet[i + 26], 16)) + '.'
-                self.dstIP += str(int(self.packet[i + 30], 16)) + '.'
+                self.srcIP += str(self.packet[i + 26]) + '.'
+                self.dstIP += str(self.packet[i + 30]) + '.'
             elif self.type == "ARP" and i < 4:
-                self.srcIP += str(int(self.packet[i + 28], 16)) + '.'
-                self.dstIP += str(int(self.packet[i + 38], 16)) + '.'
+                self.srcIP += str(self.packet[i + 28]) + '.'
+                self.dstIP += str(self.packet[i + 38]) + '.'
         self.dstMAC = self.dstMAC[:-1]
         self.srcMAC = self.srcMAC[:-1]
         self.srcIP = self.srcIP[:-1]
         self.dstIP = self.dstIP[:-1]
 
-        print('y', self.numID, self.type)
 
         if self.type == "IPv4":
             self.analyzeIPv4()
             return
-        # elif self.type == "ARP":
-        #     print('x', self.numID)
-        #     self.communicationAnalyzer.analyzeARP(self)
-        #     return
+        elif self.type == "ARP":
+            self.communicationAnalyzer.analyzeARP(self)
+            return
 
     def analyzeIPv4(self):
         for key in self.fileReader.ipv4typeList:
-            if self.packet[23].lower() == key[0]:
+            if decToHex(self.packet[23]).lower() == key[0]:
                 self.protocol = key[1]
                 if key[1] == "TCP":
                     self.analyzeTCP()
@@ -100,7 +99,7 @@ class Ethernet2(Ethernet):
 
     def analyzeTCP(self):
         for port in self.fileReader.tcpPortList:
-            if (self.packet[34] + self.packet[35]).lower() == port[0] or (self.packet[36] + self.packet[37]).lower() == \
+            if (decToHex(self.packet[34]) + decToHex(self.packet[35])).lower() == port[0] or (decToHex(self.packet[36]) + decToHex(self.packet[37])).lower() == \
                     port[0]:
                 self.port = port[1]
                 break
@@ -108,7 +107,7 @@ class Ethernet2(Ethernet):
 
     def analyzeUDP(self):
         for port in self.fileReader.udpPortList:
-            if (self.packet[34] + self.packet[35]).lower() == port[0] or (self.packet[36] + self.packet[37]).lower() == \
+            if (decToHex(self.packet[34]) + decToHex(self.packet[35])).lower() == port[0] or (decToHex(self.packet[36]) + decToHex(self.packet[37])).lower() == \
                     port[0]:
                 self.port = port[1]
                 break
@@ -120,7 +119,7 @@ class Ethernet2(Ethernet):
 
     def analyzeICMP(self):
         for type in self.fileReader.icmpTypeList:
-            if (self.packet[34]).lower() == type[0]:
+            if (decToHex(self.packet[34])).lower() == type[0]:
                 self.port = type[1]
                 break
 
@@ -139,8 +138,7 @@ class Ethernet2(Ethernet):
             return
 
         if self.protocol == "UDP" or self.protocol == "TCP":
-            print(
-                f"{'Neznamy' if self.port == None else self.port}\nZdrojovy port: {int(str(('0x' + self.packet[34] + self.packet[35]).lower()), 16)}\nCielovy port: {int(str(('0x' + self.packet[36] + self.packet[37]).lower()), 16)}")
+            print( f"{'Neznamy' if self.port == None else self.port}\nZdrojovy port: {int(str(('0x' + decToHex(self.packet[34]) + decToHex(self.packet[35])).lower()), 16)}\nCielovy port: {int(str(('0x' + decToHex(self.packet[36]) + decToHex(self.packet[37])).lower()), 16)}")
         elif self.protocol == "ICMP":
             print(f"ICMP type: {self.port}")
 
@@ -166,7 +164,7 @@ class IEEE802_snap(Ethernet):
         Ethernet.analyze(self)
 
         for key in self.fileReader.saptypeList:
-            if (self.packet[14]).lower() == key[0]:
+            if (decToHex(self.packet[14])).lower() == key[0]:
                 self.type = key[1]
                 break
 
@@ -181,6 +179,13 @@ class IEEE802_llc(Ethernet):
         Ethernet.analyze(self)
 
         for key in self.fileReader.saptypeList:
-            if (self.packet[14]).lower() == key[0]:
+            if (decToHex(self.packet[14])).lower() == key[0]:
                 self.type = key[1]
                 break
+
+
+def decToHex(n1):
+    x = hex(n1)[2:]
+    if len(x) == 1:
+        x='0'+x
+    return x
