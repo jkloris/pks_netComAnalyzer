@@ -44,15 +44,18 @@ def analyzePacket(packet, fileReader, ipCounter, communicationAnalyzer, idNum):
     return frame
 
 def printAllPacketInfo(analyzedPackets, ipCounter):
+    f = open('output.txt', 'w')
+
     for p in analyzedPackets:
         if p != None:
             print(f'Frame #{analyzedPackets.index(p) + 1}')
-            p.whoAmI()
-            p.printPacket()
+            f.write(f'Frame #{analyzedPackets.index(p) + 1}\n')
+            f.write(p.whoAmI())
+            f.write(p.printPacket()+"\n____________________________________________________\n")
             print("____________________________________________________")
         # if analyzedPackets.index(p) > 100:
         #     break
-
+    f.close()
     print("Vsetky zdrojove adresy (IPv4):")
     ipCounter.printAllIPs()
     print(f"Najviac paketov ({ipCounter.allIPs[ipCounter.getMostFrequentIP()]}) odoslal {ipCounter.getMostFrequentIP()}")

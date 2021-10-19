@@ -21,14 +21,21 @@ class Ethernet:
         self.srcMAC = self.srcMAC[:-1]
 
     def whoAmI(self):
-        print(f'Dlzka ramca poskytnuta pcap API: {len(self.packet)} B')
-        print(f'Dlzka ramca prenasana po mediu: {64 if (len(self.packet) + 4) < 64 else (len(self.packet) + 4)} B')
-        print("Neznamy protokol" if self.type == '' else self.type)
-        print(f'Zdrojova MAC adresa: {self.srcMAC}')
-        print(f'Cielova MAC adresa: {self.dstMAC}')
+        # print(f'Dlzka ramca poskytnuta pcap API: {len(self.packet)} B')
+        # print(f'Dlzka ramca prenasana po mediu: {64 if (len(self.packet) + 4) < 64 else (len(self.packet) + 4)} B')
+        # print("Neznamy protokol" if self.type == '' else self.type)
+        # print(f'Zdrojova MAC adresa: {self.srcMAC}')
+        # print(f'Cielova MAC adresa: {self.dstMAC}')
+        a = f'Dlzka ramca poskytnuta pcap API: {len(self.packet)} B\n'
+        a += f'Dlzka ramca prenasana po mediu: {64 if (len(self.packet) + 4) < 64 else (len(self.packet) + 4)} B\n'
+        a += "Neznamy protokol" if self.type == '' else self.type
+        a += f'\nZdrojova MAC adresa: {self.srcMAC}\n'
+        a += f'Cielova MAC adresa: {self.dstMAC}\n'
+        return a
 
     def printPacket(self):
         s = ''
+        a = s
         counter = 0
         for b in self.packet:
             s += decToHex(b) + " "
@@ -37,8 +44,11 @@ class Ethernet:
                 s += ' '
             if counter % 16 == 0:
                 print(s)
+                a += s + '\n'
                 s = ''
         print(s)
+        a+=s
+        return a
 
 
 class Ethernet2(Ethernet):
@@ -125,24 +135,42 @@ class Ethernet2(Ethernet):
                 break
 
     def whoAmI(self):
-        print('Ethernet II')
-        print(f'Dlzka ramca poskytnuta pcap API: {len(self.packet)} B')
-        print(f'Dlzka ramca prenasana po mediu: {64 if (len(self.packet) + 4) < 64 else (len(self.packet) + 4)} B')
-        print(f'Zdrojova MAC adresa: {self.srcMAC}')
-        print(f'Cielova MAC adresa: {self.dstMAC}')
-        print("Neznamy protokol" if self.type == '' else self.type)
-        if self.srcIP != "": print(f'Zdrojova IP adresa: {self.srcIP}')
-        if self.dstIP != "": print(f'Cielova IP adresa: {self.dstIP}')
+        # print('Ethernet II')
+        # print(f'Dlzka ramca poskytnuta pcap API: {len(self.packet)} B')
+        # print(f'Dlzka ramca prenasana po mediu: {64 if (len(self.packet) + 4) < 64 else (len(self.packet) + 4)} B')
+        # print(f'Zdrojova MAC adresa: {self.srcMAC}')
+        # print(f'Cielova MAC adresa: {self.dstMAC}')
+        # print("Neznamy protokol" if self.type == '' else self.type)
+        # if self.srcIP != "": print(f'Zdrojova IP adresa: {self.srcIP}')
+        # if self.dstIP != "": print(f'Cielova IP adresa: {self.dstIP}')
+        # if self.protocol != None:
+        #     print(f'{self.protocol}')
+        # else:
+        #     return
+        #
+        # if self.protocol == "UDP" or self.protocol == "TCP":
+        #     print( f"{'Neznamy' if self.port == None else self.port}\nZdrojovy port: {int(str(('0x' + decToHex(self.packet[34]) + decToHex(self.packet[35])).lower()), 16)}\nCielovy port: {int(str(('0x' + decToHex(self.packet[36]) + decToHex(self.packet[37])).lower()), 16)}")
+        # elif self.protocol == "ICMP":
+        #     print(f"ICMP type: {self.port}")
+        a = 'Ethernet II\n'
+        a += f'Dlzka ramca poskytnuta pcap API: {len(self.packet)} B\n'
+        a += f'Dlzka ramca prenasana po mediu: {64 if (len(self.packet) + 4) < 64 else (len(self.packet) + 4)} B\n'
+        a += f'Zdrojova MAC adresa: {self.srcMAC}\n' + f'Cielova MAC adresa: {self.dstMAC}\n'
+        a += "Neznamy protokol" if self.type == '' else self.type
+        if self.srcIP != "\n": a += f'\nZdrojova IP adresa: {self.srcIP}\n'
+        if self.dstIP != "": a +=f'Cielova IP adresa: {self.dstIP}\n'
         if self.protocol != None:
-            print(f'{self.protocol}')
+            a += f'{self.protocol}\n'
         else:
-            return
+            print(a)
+            return a
 
         if self.protocol == "UDP" or self.protocol == "TCP":
-            print( f"{'Neznamy' if self.port == None else self.port}\nZdrojovy port: {int(str(('0x' + decToHex(self.packet[34]) + decToHex(self.packet[35])).lower()), 16)}\nCielovy port: {int(str(('0x' + decToHex(self.packet[36]) + decToHex(self.packet[37])).lower()), 16)}")
+            a += f"{'Neznamy' if self.port == None else self.port}\nZdrojovy port: {int(str(('0x' + decToHex(self.packet[34]) + decToHex(self.packet[35])).lower()), 16)}\nCielovy port: {int(str(('0x' + decToHex(self.packet[36]) + decToHex(self.packet[37])).lower()), 16)}\n"
         elif self.protocol == "ICMP":
-            print(f"ICMP type: {self.port}")
-
+            a +=f"ICMP type: {self.port}\n"
+        print(a)
+        return a
 
 class IEEE802_raw(Ethernet):
 
@@ -151,15 +179,19 @@ class IEEE802_raw(Ethernet):
         self.type = "IPX"
 
     def whoAmI(self):
-        print('IEEE 802.3 Raw')
-        Ethernet.whoAmI(self)
+        a ='IEEE 802.3 Raw'
+        a+=Ethernet.whoAmI(self)
+        print(a)
+        return a
 
 
 class IEEE802_snap(Ethernet):
 
     def whoAmI(self):
-        print('IEEE 802.3 SNAP')
-        Ethernet.whoAmI(self)
+        a = 'IEEE 802.3 SNAP'
+        a+=Ethernet.whoAmI(self)
+        print(a)
+        return a
 
     def analyze(self):
         Ethernet.analyze(self)
@@ -173,8 +205,10 @@ class IEEE802_snap(Ethernet):
 class IEEE802_llc(Ethernet):
 
     def whoAmI(self):
-        print('IEEE 802.3 LLC')
-        Ethernet.whoAmI(self)
+        a = 'IEEE 802.3 LLC'
+        a += Ethernet.whoAmI(self)
+        print(a)
+        return a
 
     def analyze(self):
         Ethernet.analyze(self)
