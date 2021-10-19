@@ -95,6 +95,7 @@ class Ethernet2(Ethernet):
                     return
                 if key[1] == "ICMP":
                     self.analyzeICMP()
+                    self.communicationAnalyzer.icmpCounter+=1
                     return
 
     def analyzeTCP(self):

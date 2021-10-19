@@ -81,9 +81,13 @@ def getAnalyzedPackets(packetList, fileReader,ipCounter, communicationAnalyzer):
     return analyzedPack
 
 
-def printICMPcomms(analyzedPack):
+def printICMPcomms(analyzedPack, number):
+    counter = 0
     for i in analyzedPack:
         if i.protocol == 'ICMP':
+            counter+=1
+            if counter > 10 and counter <= number - 10:
+                continue
             print(f"_________________\nFrame #{i.numID}")
             i.whoAmI()
             i.printPacket()
@@ -122,7 +126,7 @@ def main():
             printAllPacketInfo(analyzedPack, ipCounter)
             continue
         if x == 2:
-            printICMPcomms(analyzedPack)
+            printICMPcomms(analyzedPack, communicationAnalyzer.icmpCounter)
             continue
         if x == 3:
             communicationAnalyzer.printARPCommunication()

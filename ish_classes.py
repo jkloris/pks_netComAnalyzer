@@ -22,6 +22,7 @@ class CommunicationAnalyzer:
     tftpComms = []
     tcpComms = []
     arpComms = []
+    icmpCounter = 0
 
     def __init__(self, packetList):
         self.packetList = packetList
@@ -41,7 +42,7 @@ class CommunicationAnalyzer:
                 return
 
 
-    #vytvaram 2D pole, kde prvy element je vzdy read request a posledny je flag o ukonceni komunikacie
+
     def addReadReqTFTP(self, packet):
         self.tftpComms.append([packet])
 
@@ -59,10 +60,13 @@ class CommunicationAnalyzer:
         for i in self.tftpComms:
             print(f"######### TFTP komunikacia c.{self.tftpComms.index(i) + 1} #######")
             for o in range(len(i)):
+                if o >= 10 and o < len(i)-10:
+                    continue
                 print(f"Frame #{i[o].numID}")
                 i[o].whoAmI()
-                print(f"[{opcode[decToHex(i[o].packet[43])]}]{'; Block: ' + str(int(decToHex(i[o].packet[44]) + decToHex(i[o].packet[45]),16)) if (decToHex(i[o].packet[43]) == '04' or decToHex(i[o].packet[43]) == '03') else ''}\n_____________________________")
-
+                print(f"[{opcode[decToHex(i[o].packet[43])]}]{'; Block: ' + str(int(decToHex(i[o].packet[44]) + decToHex(i[o].packet[45]),16)) if (decToHex(i[o].packet[43]) == '04' or decToHex(i[o].packet[43]) == '03') else ''}")
+                i[o].printPacket()
+                print("_____________________________")
 
     def analyzeARP(self, packet):
         com = {
@@ -91,11 +95,27 @@ class CommunicationAnalyzer:
         for p in self.arpComms:
             print(f"\n######## ARP Komunikacia c.{self.arpComms.index(p)+1} ########\n")
             print(f"ARP-requests:")
+
+            if len(p['request']) > 0:
+                print(f"IP adresa: {p['request'][0].dstIP}, MAC adresa: ???")
+            else:
+                print("--Nenasli sa--")
+
+            count = 0
             for req in p['request']:
+
+                if count >= 10 and count < len(p['request'])-10:
+                    continue
+                count += 1
+
                 print(f"_________________\nFrame #{req.numID}")
                 req.whoAmI()
                 req.printPacket()
             print(f"\nARP-replies:")
+            if len(p['reply']) > 0:
+                print(f"IP adresa: {p['reply'][0].srcIP}, MAC adresa: {p['reply'][0].srcMAC}")
+            else: print("--Nenasli sa--")
+
             for rep in p['reply']:
                 print(f"_________________\nFrame #{rep.numID}")
                 rep.whoAmI()
@@ -143,12 +163,15 @@ class CommunicationAnalyzer:
             if i.success and i.syn.port == protSwitch:
                 if not full and (i.automat.status == 6 or i.automat.status == 6.1):
                     full = True
-                    print(f"###### Komunikaca c.{self.tcpComms.index(i) + 1} (Uplna) #####\nFrame {i.syn.numID} [SYN]")
+                    print(f"###### Komunikaca c.{self.tcpComms.index(i) + 1} (Kompletna) #####\nFrame {i.syn.numID} [SYN]")
                     i.syn.whoAmI()
+                    i.syn.printPacket()
                     print(f"_____________\nFrame {i.synAck.numID} [SYN, ACK]")
                     i.synAck.whoAmI()
+                    i.synAck.printPacket()
                     print(f"_____________\nFrame {i.ack.numID} [ACK]")
                     i.ack.whoAmI()
+                    i.ack.printPacket()
                     print(f"_____________\n")
 
 
@@ -157,12 +180,12 @@ class CommunicationAnalyzer:
 
                         print(f"Frame {k.numID} [{i.flagSwitch(decToHex(k.packet[47]).lower())}]")
                         k.whoAmI()
-                         # k.printPacket()
+                        k.printPacket()
                         print("_____________________________")
 
                 elif not part and not (i.automat.status == 6 or i.automat.status == 6.1):
                     part = True
-                    print(f"###### Komunikaca c.{self.tcpComms.index(i) + 1} (Neuplna) #####\nFrame {i.syn.numID} [SYN]")
+                    print(f"###### Komunikaca c.{self.tcpComms.index(i) + 1} (Nekompletna) #####\nFrame {i.syn.numID} [SYN]")
                     i.syn.whoAmI()
                     print(f"_____________\nFrame {i.synAck.numID} [SYN, ACK]")
                     i.synAck.whoAmI()
@@ -178,6 +201,9 @@ class CommunicationAnalyzer:
                         print("_____________________________")
 
                 if full and part: return
+
+        if not full: print("----------Nenasla sa kompletna komunikacia--------")
+        if not part: print("----------Nenasla sa nekompletna komunikacia------")
 
 class ThreeWayHandshake:
 
