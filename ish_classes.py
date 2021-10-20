@@ -71,15 +71,17 @@ class CommunicationAnalyzer:
     def analyzeARP(self, packet):
         com = {
             'request' : [],
-            'reply' : []
+            'reply' : [],
+            'closed' : False
         }
 
         for i in self.arpComms:
-            if decToHex(packet.packet[21]) == '01' and ((i['request'] != [] and i['request'][0].srcIP == packet.srcIP and  i['request'][0].dstIP == packet.dstIP ) or (i['reply'] != [] and i['reply'][0].srcIP == packet.dstIP and  i['reply'][0].srcIP == packet.dstIP)) : #mozno pridat aj kontrolu MAC
+            if decToHex(packet.packet[21]) == '01' and not i['closed'] and ((i['request'] != [] and i['request'][0].srcIP == packet.srcIP and  i['request'][0].dstIP == packet.dstIP ) or (i['reply'] != [] and i['reply'][0].srcIP == packet.dstIP and  i['reply'][0].srcIP == packet.dstIP)) : #mozno pridat aj kontrolu MAC
                 i['request'].append(packet)
                 return
-            elif decToHex(packet.packet[21]) == '02' and ((i['request'] != [] and i['request'][0].srcIP == packet.dstIP and i['request'][0].dstIP == packet.srcIP) or (i['reply'] != [] and i['reply'][0].srcIP == packet.srcIP and i['reply'][0].dstIP == packet.dstIP)):
+            elif decToHex(packet.packet[21]) == '02' and not i['closed'] and ((i['request'] != [] and i['request'][0].srcIP == packet.dstIP and i['request'][0].dstIP == packet.srcIP) or (i['reply'] != [] and i['reply'][0].srcIP == packet.srcIP and i['reply'][0].dstIP == packet.dstIP)):
                 i['reply'].append(packet)
+                i['closed'] = True
                 return
         if decToHex(packet.packet[21]) == '01':
             com['request'].append(packet)
@@ -87,6 +89,7 @@ class CommunicationAnalyzer:
             return
         elif decToHex(packet.packet[21]) == '02':
             com['reply'].append(packet)
+            com['closed'] = True
             self.arpComms.append(com)
             return
 

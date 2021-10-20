@@ -110,16 +110,14 @@ class Ethernet2(Ethernet):
 
     def analyzeTCP(self):
         for port in self.fileReader.tcpPortList:
-            if (decToHex(self.packet[34]) + decToHex(self.packet[35])).lower() == port[0] or (decToHex(self.packet[36]) + decToHex(self.packet[37])).lower() == \
-                    port[0]:
+            if (decToHex(self.packet[34]) + decToHex(self.packet[35])).lower() == port[0] or (decToHex(self.packet[36]) + decToHex(self.packet[37])).lower() == port[0]:
                 self.port = port[1]
                 break
         self.communicationAnalyzer.checkForTWH(self)
 
     def analyzeUDP(self):
         for port in self.fileReader.udpPortList:
-            if (decToHex(self.packet[34]) + decToHex(self.packet[35])).lower() == port[0] or (decToHex(self.packet[36]) + decToHex(self.packet[37])).lower() == \
-                    port[0]:
+            if (decToHex(self.packet[34]) + decToHex(self.packet[35])).lower() == port[0] or (decToHex(self.packet[36]) + decToHex(self.packet[37])).lower() == port[0]:
                 self.port = port[1]
                 break
         if self.port == 'tftp':

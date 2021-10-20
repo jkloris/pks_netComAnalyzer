@@ -43,8 +43,8 @@ def analyzePacket(packet, fileReader, ipCounter, communicationAnalyzer, idNum):
             frame = IEEE802_llc(packet, fileReader)
     return frame
 
-def printAllPacketInfo(analyzedPackets, ipCounter):
-    f = open('output.txt', 'w')
+def printAllPacketInfo(analyzedPackets, ipCounter, file):
+    f = open('output_'+file[8:-4]+'txt', 'w')
 
     for p in analyzedPackets:
         if p != None:
@@ -97,8 +97,8 @@ def printICMPcomms(analyzedPack, number):
 
 
 def main():
-
-    pcaps = rdpcap(getChosenPcapFile())
+    file = getChosenPcapFile()
+    pcaps = rdpcap(file)
 
     packetList = pcapToBList(pcaps)
     fileReader = FileReader()
@@ -106,13 +106,10 @@ def main():
     communicationAnalyzer = CommunicationAnalyzer(packetList)
     analyzedPack = getAnalyzedPackets(packetList, fileReader,ipCounter, communicationAnalyzer)
 
-
-    # printAllPacketInfo(analyzedPack, ipCounter)
     x = None
-    # communicationAnalyzer.printTCPCommunication("https (ssl)", 6)
     while x != 11:
         print("Zvol moznosť:")
-        print("1....Vypis vsetkych ramcov (bod 1.-3.)")
+        print("1....Vypis vsetkych ramcov (aj do suboru output.txt)")
         print("2....Vypis ICMP komunikacie")
         print("3....Vypis ARP komunikacie")
         print("4....Vypis TFTP komunikacie")
@@ -126,7 +123,7 @@ def main():
         x = int(input())
 
         if x == 1:
-            printAllPacketInfo(analyzedPack, ipCounter)
+            printAllPacketInfo(analyzedPack, ipCounter, file)
             continue
         if x == 2:
             printICMPcomms(analyzedPack, communicationAnalyzer.icmpCounter)
@@ -158,21 +155,6 @@ def main():
 
 
 
-
-
-
-
-
-
 if __name__== "__main__":
     main()
 
-#TODO:
-#   ~pri 3wh ukazuje http aj ked tam nie je (asi nechat tak)
-#       -spytat sa na FIN a spravit to
-#       -edge case, ked na skoncenom porte zacne novy handshake
-#   ~TFTP: trace-15 packet 49 je problem, lebo nesedia porty a potom neukazuje, že to je tftp
-#       ~osetri krajne pripady (if packet.packet[43] == '03' and len(packet.packet) < 558:)
-#       -upravit vypis
-#   ~viac najcastejsich adries
-#   ~ARP komunikacia
