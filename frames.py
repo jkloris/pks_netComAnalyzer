@@ -1,3 +1,4 @@
+#materska trieda standardov, nema svoje instancie - az jej deti
 class Ethernet:
 
     def __init__(self, packet, fileReader):
@@ -6,12 +7,11 @@ class Ethernet:
         self.type = ''
         self.fileReader = fileReader
         self.protocol = None
-        # self.lenApi = None
-        # self.lenMed = None
 
         self.packet = packet
         self.analyze()
 
+    #zist MAC adresy ramca
     def analyze(self):
         for i in range(6):
             self.dstMAC += decToHex(self.packet[i]) + ':'
@@ -20,12 +20,8 @@ class Ethernet:
         self.dstMAC = self.dstMAC[:-1]
         self.srcMAC = self.srcMAC[:-1]
 
+    #vypis informacii o ramci
     def whoAmI(self):
-        # print(f'Dlzka ramca poskytnuta pcap API: {len(self.packet)} B')
-        # print(f'Dlzka ramca prenasana po mediu: {64 if (len(self.packet) + 4) < 64 else (len(self.packet) + 4)} B')
-        # print("Neznamy protokol" if self.type == '' else self.type)
-        # print(f'Zdrojova MAC adresa: {self.srcMAC}')
-        # print(f'Cielova MAC adresa: {self.dstMAC}')
         a = f'Dlzka ramca poskytnuta pcap API: {len(self.packet)} B\n'
         a += f'Dlzka ramca prenasana po mediu: {64 if (len(self.packet) + 4) < 64 else (len(self.packet) + 4)} B\n'
         a += "Neznamy protokol" if self.type == '' else self.type
@@ -33,6 +29,7 @@ class Ethernet:
         a += f'Cielova MAC adresa: {self.dstMAC}\n'
         return a
 
+    #vypis jednotlivych bytov ramca v monospace tvare
     def printPacket(self):
         s = ''
         a = s
@@ -50,16 +47,14 @@ class Ethernet:
         a+=s
         return a
 
-
+#Ethernet II
 class Ethernet2(Ethernet):
 
     def __init__(self, packet, fileReader, communicationAnalyzer, idNum):
         self.communicationAnalyzer = communicationAnalyzer
         self.dstIP = ''
         self.srcIP = ''
-        # self.protocol = None
         self.port = None
-        # tmp
         self.numID = idNum
         Ethernet.__init__(self, packet, fileReader)
 
@@ -71,6 +66,7 @@ class Ethernet2(Ethernet):
                 self.type = key[1]
                 break
 
+        # pre ARP a IPv4 ziska aj IP adresy
         for i in range(6):
             self.dstMAC += decToHex(self.packet[i]) + ':'
             self.srcMAC += decToHex(self.packet[i + 6]) + ':'
@@ -93,6 +89,7 @@ class Ethernet2(Ethernet):
             self.communicationAnalyzer.analyzeARP(self)
             return
 
+    # urci vnoreny protokol IPv4 protokolu a v niektorych pripadoch zacne analyzu komunikace
     def analyzeIPv4(self):
         for key in self.fileReader.ipv4typeList:
             if decToHex(self.packet[23]).lower() == key[0]:
@@ -107,7 +104,7 @@ class Ethernet2(Ethernet):
                     self.analyzeICMP()
                     self.communicationAnalyzer.icmpCounter+=1
                     return
-
+    # podla kodu portov priradi port a zavola funkciu na usporiadanie TCP komunikacie
     def analyzeTCP(self):
         for port in self.fileReader.tcpPortList:
             if (decToHex(self.packet[34]) + decToHex(self.packet[35])).lower() == port[0] or (decToHex(self.packet[36]) + decToHex(self.packet[37])).lower() == port[0]:
@@ -115,6 +112,7 @@ class Ethernet2(Ethernet):
                 break
         self.communicationAnalyzer.checkForTWH(self)
 
+    # podla kodu portov priradi port a zavola funkciu na usporiadanie TFTP komunikacie
     def analyzeUDP(self):
         for port in self.fileReader.udpPortList:
             if (decToHex(self.packet[34]) + decToHex(self.packet[35])).lower() == port[0] or (decToHex(self.packet[36]) + decToHex(self.packet[37])).lower() == port[0]:
@@ -126,6 +124,7 @@ class Ethernet2(Ethernet):
         if self.port == None:
             self.communicationAnalyzer.analyzeTFTP(self)
 
+    # ramcom s ICMP priradi typ spravy
     def analyzeICMP(self):
         for type in self.fileReader.icmpTypeList:
             if (decToHex(self.packet[34])).lower() == type[0]:
@@ -133,23 +132,7 @@ class Ethernet2(Ethernet):
                 break
 
     def whoAmI(self):
-        # print('Ethernet II')
-        # print(f'Dlzka ramca poskytnuta pcap API: {len(self.packet)} B')
-        # print(f'Dlzka ramca prenasana po mediu: {64 if (len(self.packet) + 4) < 64 else (len(self.packet) + 4)} B')
-        # print(f'Zdrojova MAC adresa: {self.srcMAC}')
-        # print(f'Cielova MAC adresa: {self.dstMAC}')
-        # print("Neznamy protokol" if self.type == '' else self.type)
-        # if self.srcIP != "": print(f'Zdrojova IP adresa: {self.srcIP}')
-        # if self.dstIP != "": print(f'Cielova IP adresa: {self.dstIP}')
-        # if self.protocol != None:
-        #     print(f'{self.protocol}')
-        # else:
-        #     return
-        #
-        # if self.protocol == "UDP" or self.protocol == "TCP":
-        #     print( f"{'Neznamy' if self.port == None else self.port}\nZdrojovy port: {int(str(('0x' + decToHex(self.packet[34]) + decToHex(self.packet[35])).lower()), 16)}\nCielovy port: {int(str(('0x' + decToHex(self.packet[36]) + decToHex(self.packet[37])).lower()), 16)}")
-        # elif self.protocol == "ICMP":
-        #     print(f"ICMP type: {self.port}")
+
         a = 'Ethernet II\n'
         a += f'Dlzka ramca poskytnuta pcap API: {len(self.packet)} B\n'
         a += f'Dlzka ramca prenasana po mediu: {64 if (len(self.packet) + 4) < 64 else (len(self.packet) + 4)} B\n'
@@ -170,6 +153,7 @@ class Ethernet2(Ethernet):
         print(a)
         return a
 
+# IEEE 802.3 Raw
 class IEEE802_raw(Ethernet):
 
     def __init__(self, packet, fileReader):
@@ -183,6 +167,7 @@ class IEEE802_raw(Ethernet):
         return a
 
 
+# IEEE 802.3 LLC + SNAP
 class IEEE802_snap(Ethernet):
 
     def whoAmI(self):
@@ -199,7 +184,7 @@ class IEEE802_snap(Ethernet):
                 self.type = key[1]
                 break
 
-
+# IEEE 802.3 LLC
 class IEEE802_llc(Ethernet):
 
     def whoAmI(self):
@@ -216,7 +201,7 @@ class IEEE802_llc(Ethernet):
                 self.type = key[1]
                 break
 
-
+# pomocna funkcia na prehodnie int tvaru do 0x?? tvaru a to do ?? tvaru
 def decToHex(n1):
     x = hex(n1)[2:]
     if len(x) == 1:

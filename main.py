@@ -5,24 +5,17 @@ from fileReader import *
 import os
 
 
+#do listov ulozi jednotlive byty rámca v dec tvare
 def pcapToBList(pcap):
     packetList = []
 
     for i in pcap:
         packetList.append(list(bytes(i)))
-        # x = bytes(i).hex()
-        #
-        # s = ''
-        # packet = []
-        # for o in range(0, len(x) , 2):
-        #     s += x[o:o + 2] + ' '
-        #     packet.append(x[o:o + 2])
-        # # print(s)
-        # packetList.append(packet)
+
     return packetList
 
 
-
+#vytvori instancie tried podla standardu ramca
 def analyzePacket(packet, fileReader, ipCounter, communicationAnalyzer, idNum):
     x = decToHex(packet[12])+decToHex(packet[13])
 
@@ -43,6 +36,7 @@ def analyzePacket(packet, fileReader, ipCounter, communicationAnalyzer, idNum):
             frame = IEEE802_llc(packet, fileReader)
     return frame
 
+#vypise informacie o vsetkych ramcoch do cmd aj suboru
 def printAllPacketInfo(analyzedPackets, ipCounter, file):
     f = open('output_'+file[8:-4]+'txt', 'w')
 
@@ -53,8 +47,7 @@ def printAllPacketInfo(analyzedPackets, ipCounter, file):
             f.write(p.whoAmI())
             f.write(p.printPacket()+"\n____________________________________________________\n")
             print("____________________________________________________")
-        # if analyzedPackets.index(p) > 100:
-        #     break
+
     f.close()
     print("Vsetky zdrojove adresy (IPv4):")
     ipCounter.printAllIPs()
@@ -64,7 +57,7 @@ def getPcapFiles():
     path = './pcaps'
     return os.listdir(path)
 
-
+#vrati nazov pcap suboru, ktory chceme analyzovat
 def getChosenPcapFile():
     for p in getPcapFiles():
        print(f'#{getPcapFiles().index(p) + 1} {p}')
@@ -75,6 +68,7 @@ def getChosenPcapFile():
 
     return  pcapFile
 
+#prebehne cely zoznam nespracovanych paketov a po analyze ich ulozi do noveho zoznamu
 def getAnalyzedPackets(packetList, fileReader,ipCounter, communicationAnalyzer):
     analyzedPack = []
     numID = 1
@@ -83,7 +77,7 @@ def getAnalyzedPackets(packetList, fileReader,ipCounter, communicationAnalyzer):
         numID+=1
     return analyzedPack
 
-
+#vypis ICMP komunikacie
 def printICMPcomms(analyzedPack, number):
     counter = 0
     for i in analyzedPack:
@@ -106,6 +100,7 @@ def main():
     communicationAnalyzer = CommunicationAnalyzer(packetList)
     analyzedPack = getAnalyzedPackets(packetList, fileReader,ipCounter, communicationAnalyzer)
 
+    #hlavny loop pouzivatelskeho rozhrania
     x = None
     while x != 11:
         print("Zvol moznosť:")

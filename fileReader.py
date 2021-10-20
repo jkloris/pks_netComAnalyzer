@@ -1,4 +1,6 @@
+# cita kody protokolov a portov z externeho suboru
 class FileReader:
+    # uklada ich do jednotlivyc zoznamov
     def __init__(self):
         self.ethertypeList = []
         self.saptypeList = []

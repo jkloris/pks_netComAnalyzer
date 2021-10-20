@@ -1,3 +1,4 @@
+# Ukladanie IP adries a pocet ich volani
 class IpCounter:
     allIPs = {}
 
@@ -7,16 +8,14 @@ class IpCounter:
             return
         self.allIPs[ip] = 1
 
-
-
     def printAllIPs(self):
         for i in self.allIPs.keys():
             print(i)
 
-    #TODO osetrit ak ich je viac
     def getMostFrequentIP(self):
         return max(self.allIPs, key=self.allIPs.get)
 
+# Analyzuje zlozitejsie komunikacie
 class CommunicationAnalyzer:
 
     tftpComms = []
@@ -31,6 +30,8 @@ class CommunicationAnalyzer:
     def analyzeTFTP(self, packet):
         thisDstPort = (decToHex(packet.packet[36]) + decToHex(packet.packet[37])).lower()
         thisSrcPort = (decToHex(packet.packet[34]) + decToHex(packet.packet[35])).lower()
+
+        # Prejde vsetkymi zacatymi komunikaciami a kontroluje, ci tam nahodou nepatri ramec. Ak ano, prida ho
         for p in self.tftpComms:
             if len(p) == 1 and p[0].srcIP == packet.dstIP and p[0].dstIP == packet.srcIP and thisDstPort == (decToHex(p[0].packet[34]) + decToHex(p[0].packet[35])).lower():
                 packet.port = 'tftp'
@@ -42,10 +43,11 @@ class CommunicationAnalyzer:
                 return
 
 
-
+    # zaciatok TFTP komunikacie
     def addReadReqTFTP(self, packet):
         self.tftpComms.append([packet])
 
+    # Vypis TFTP komunikace
     def printTFTPCommunication(self):
 
         opcode = {
@@ -60,6 +62,7 @@ class CommunicationAnalyzer:
         for i in self.tftpComms:
             print(f"######### TFTP komunikacia c.{self.tftpComms.index(i) + 1} #######")
             for o in range(len(i)):
+                # limit na 20 ramcov
                 if o >= 10 and o < len(i)-10:
                     continue
                 print(f"Frame #{i[o].numID}")
@@ -68,7 +71,10 @@ class CommunicationAnalyzer:
                 i[o].printPacket()
                 print("_____________________________")
 
+    #analyza ARP komunikacie
     def analyzeARP(self, packet):
+        # do requestu dava vsetky requesty kym nepride reply
+        # ak je closed == True, komunikacia je uzavreta
         com = {
             'request' : [],
             'reply' : [],
@@ -76,6 +82,7 @@ class CommunicationAnalyzer:
         }
 
         for i in self.arpComms:
+            # podla IP adresy najde a popripade priradi ramec do komunikacie ako request alebo reply
             if decToHex(packet.packet[21]) == '01' and not i['closed'] and ((i['request'] != [] and i['request'][0].srcIP == packet.srcIP and  i['request'][0].dstIP == packet.dstIP ) or (i['reply'] != [] and i['reply'][0].srcIP == packet.dstIP and  i['reply'][0].srcIP == packet.dstIP)) : #mozno pridat aj kontrolu MAC
                 i['request'].append(packet)
                 return
@@ -83,6 +90,7 @@ class CommunicationAnalyzer:
                 i['reply'].append(packet)
                 i['closed'] = True
                 return
+        #krajny pripad, ked na danej IP adrese este nie je komunikacia
         if decToHex(packet.packet[21]) == '01':
             com['request'].append(packet)
             self.arpComms.append(com)
@@ -93,6 +101,7 @@ class CommunicationAnalyzer:
             self.arpComms.append(com)
             return
 
+    # vypis ARP Komunikacie
     def printARPCommunication(self):
 
         for p in self.arpComms:
@@ -106,7 +115,7 @@ class CommunicationAnalyzer:
 
             count = 0
             for req in p['request']:
-
+                #limit na 20 ramcov
                 if count >= 10 and count < len(p['request'])-10:
                     continue
                 count += 1
@@ -126,16 +135,19 @@ class CommunicationAnalyzer:
 
     #tcp communicatoin
     def checkForTWH(self, packet):
+        # zachytenie paketu s flagom SYN
         if decToHex(packet.packet[47]).lower() == '02':
             self.tcpComms.append(ThreeWayHandshake(packet))
             return
 
+        # zachytenie paketu s flagom SYN, ACK
         if decToHex(packet.packet[47]).lower() == '12':
             for i in self.tcpComms:
                 if self.cmpIPandPort(i.syn, packet) and i.synAck is None and i.ack is None and not i.success:
                     i.synAck = packet
                     return
 
+        # zachytenie paketu s flagom ACK
         if decToHex(packet.packet[47]).lower() == '10':
             for i in self.tcpComms:
                 if i.synAck is not None and self.cmpIPandPort(i.synAck, packet) and i.ack is None and not i.success:
@@ -143,6 +155,7 @@ class CommunicationAnalyzer:
                     i.success = True
                     return
 
+        # zachytenie paketu s flagom ACK, FIN alebo RST
         if (packet.packet[47] & int("10", 16)) == 16 or (packet.packet[47] & int("01", 16)) == 1 or (packet.packet[47] & int("04", 16)) == 4 :
             for i in self.tcpComms:
                 if i.synAck is not None and (self.cmpIPandPort(i.synAck, packet) or self.cmpIPandPort(i.syn, packet)) and i.success and i.automat.status != 6:
@@ -151,13 +164,13 @@ class CommunicationAnalyzer:
                     return
 
 
-
+    # porovnanie adries a portov ramcov
     def cmpIPandPort(self, p1, p2):
         if p1.srcIP == p2.dstIP and p1.dstIP == p2.srcIP and (decToHex(p1.packet[34]) + decToHex(p1.packet[35])).lower() == (decToHex(p2.packet[36]) + decToHex(p2.packet[37])).lower() and (decToHex(p2.packet[34]) + decToHex(p2.packet[35])).lower() == (decToHex(p1.packet[36]) + decToHex(p1.packet[37])).lower():
             return True
         return False
 
-
+    # vypis TCP komunikacie
     def printTCPCommunication(self, protSwitch):
         full = False
         part = False
@@ -177,7 +190,7 @@ class CommunicationAnalyzer:
                     i.ack.printPacket()
                     print(f"_____________\n")
 
-
+                    # limit na 20 ramcov
                     for k in i.comm:
                         if i.comm.index(k) > 6 and i.comm.index(k) < len(i.comm) - 10: continue
 
@@ -208,6 +221,7 @@ class CommunicationAnalyzer:
         if not full: print("----------Nenasla sa kompletna komunikacia--------")
         if not part: print("----------Nenasla sa nekompletna komunikacia------")
 
+# ukladanie TCP komunikacie
 class ThreeWayHandshake:
 
     def __init__(self,synPacket):
@@ -229,6 +243,7 @@ class ThreeWayHandshake:
             '19': 'FIN,PSH,ACK'
         }[flag]
 
+# Automat na kontrolu TCP ukoncenia
 class FinTCPAutomat:
 
     def __init__(self):
@@ -241,10 +256,10 @@ class FinTCPAutomat:
         if self.status == 0 and (packet.packet[47] & int("01", 16)) == 1: #FIN
             self.status = 2
             return
-        if self.status == 0 and (packet.packet[47] & int("14", 16)) == 20: #RST,ACK
-            self.status = 6
+        if (packet.packet[47] & int("14", 16)) == 20: #RST,ACK
+            self.status = 6.1
             return
-        if self.status == 0 and (packet.packet[47] & int("04", 16)) == 4: #RST
+        if (packet.packet[47] & int("04", 16)) == 4: #RST
             self.status = 6.1
             return
 
